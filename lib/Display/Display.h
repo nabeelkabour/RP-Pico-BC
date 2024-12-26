@@ -9,6 +9,8 @@
 
 extern Adafruit_PCD8544 display;
 
+extern int16_t contrast;
+
 namespace Display
 {
     void setup();

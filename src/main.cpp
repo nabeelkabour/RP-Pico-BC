@@ -1,12 +1,14 @@
 #include <Arduino.h>
-#include "PicoEncoder.h"
+//#include "pio_encoder.h"
 #include <SPI.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_PCD8544.h>
 #include <UI.h>
+#include <Input.h>
 
 //Adafruit_PCD8544 display = Adafruit_PCD8544(SPI_CLK, SPIMOSI, DISP_DC, DISP_CS, DISP_RST);
-PicoEncoder encoder;
+// extern PioEncoder encoder;
+//PioEncoder encoder(ENC_A);
 
 bool oldConfirmBtnState = true;
 bool oldBackBtnState = true;
@@ -17,8 +19,8 @@ void setup()
 {
   Display::setup();
 
-  encoder.begin(ENC_A);
-
+  encoder.begin();
+  encoder.setMode(COUNT_1X);
   //Serial.begin(115200);
 }
 
@@ -26,15 +28,21 @@ void loop()
 {
   BicycleComputer::loop();
   
-  encoder.update();
-  
-  menuManager.cursor = encoder.step / 4;
+  //int32_t encVal = encoder.getCount();
+ 
+//   if(encVal < 0) encoder.reset(0);
+//   else if(encVal > 2) encoder.reset(2);
+
+  //menuManager.cursor =  encoder.getCount();// / 4;
 
   if(checkConfirmButton()) menuManager.confirm();
   if(checkBackButton()) menuManager.back();
 
   menuManager.update();
 
+  display.setContrast(contrast);
+  display.display();
+  
   // display.clearDisplay();
   // display.setCursor(0, 0);
   // display.setTextSize(5);
@@ -73,7 +81,7 @@ bool checkBackButton()
         {
             isPressed = true;
         }
-        delay(20);
+        delay(300); // Adjust this when using complete project
     }
 
     return isPressed;

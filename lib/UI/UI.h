@@ -6,6 +6,7 @@
 #include <BikeTime.h>
 #include <Bicycle Computer.h>
 #include <vector>
+#include <Input.h>
 
 namespace UI
 {
@@ -16,7 +17,8 @@ namespace UI
         main,
         settings,
         variable,
-        bikeCirc
+        bikeCirc,
+        setContrast
     };
 
     class MenuPage;
@@ -25,7 +27,7 @@ namespace UI
     {
     public:
         //current menu index
-        Page currentPage = Page::main;
+        Page currentPage = Page::spdDst;
         Page prevPage = Page::NONE;
         int8_t cursor = 0;
 
@@ -72,8 +74,8 @@ namespace UI
 
         MenuPage(std::string _name);
         virtual void update();
-        virtual void confirm() = 0;
-        virtual void back() = 0;
+        virtual void confirm();
+        virtual void back();
     };
 
     class ListPage : public MenuPage
@@ -104,19 +106,22 @@ namespace UI
     };
 
     // Base Variable
-    class Variable : public MenuPage
-    {
-    public:
-        int16_t* variablePtr = nullptr;
-        int16_t min, max, value;
-        int16_t prevValue = value;
-        int16_t savedValue = value;
-        bool saved = false;
+        class Variable : public MenuPage
+        {
+        public:         
+            int16_t min; 
+            int16_t max;
+            int16_t value;
+            int16_t defaultValue;
+            int16_t prevValue = value;
+            int16_t savedValue = value;
+            int16_t* variablePtr = nullptr;
+            bool saved = false;
 
-        Variable(std::string _name, int16_t _min, int16_t _max, int16_t defaultVal, int16_t* _varPtr);
-        virtual void confirm() = 0;
-        virtual void back() = 0;
-    };
+            Variable(std::string _name, int16_t _min, int16_t _max, int16_t defaultVal, int16_t* _varPtr);
+            virtual void confirm() = 0;
+            virtual void back() = 0;
+        };
 
     class Integer : public Variable
     {

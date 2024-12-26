@@ -343,10 +343,12 @@ const unsigned char* logo_anim_array[7] = {
 // 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 // };
 
+int16_t contrast = 60;
+
 void Display::setup()
 {
     display.begin();
-    display.setContrast(60);
+    display.setContrast(contrast);
     display.clearDisplay();
     display.setTextSize(6);
     display.setTextColor(BLACK);

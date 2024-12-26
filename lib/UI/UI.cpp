@@ -10,15 +10,24 @@ UI::Manager::Manager()
     menuPages[Page::main] = new UI::MainMenu("Main Menu");
     menuPages[Page::settings] = new UI::SettingsMenu("Settings");
     menuPages[Page::variable] = new UI::Integer("Volume", 0, 100, 25, nullptr);
-    menuPages[Page::bikeCirc] = new UI::BikeCirc("Wheel circ");
+    menuPages[Page::setContrast] = new UI::Integer("Contrast", 0, 127, 60, &contrast);
+    menuPages[Page::bikeCirc] = new UI::BikeCirc("Wheel circ mm");
 
-    currentPage = Page::main;
-    prevPage = Page::main;
+    // currentPage = Page::main;
+    // prevPage = Page::main;
 }
 
 void UI::Manager::update()
 {
     menuPages[currentPage]->update();
+ 
+//    int32_t encVal = encoder.getCount();
+//    uint8_t menuSize = menuPages[currentPage]->elementList.size(); 
+
+//    if(encVal < 0) encoder.reset(0);
+//    else if(encVal > menuSize) encoder.reset(menuSize - 1);
+
+//    menuManager.cursor = encoder.getCount();
 }
 
 void UI::Manager::confirm()
@@ -44,15 +53,29 @@ void UI::MenuPage::update()
     display.display();
 }
 
+void UI::MenuPage::confirm()
+{
+    display.clearDisplay();
+}
+
+void UI::MenuPage::back()
+{
+    display.clearDisplay();
+}
+
 UI::ListPage::ListPage(std::string _name) : MenuPage(_name) {}
 
 void UI::ListPage::confirm()
 {
+    MenuPage::confirm();
+
     elementList[menuManager.cursor]->action();
 }
 
 void UI::ListPage::back()
 {
+    MenuPage::back();
+    
     menuManager.currentPage = menuManager.prevPage;
     menuManager.prevPage = Page::main;
 
@@ -65,7 +88,7 @@ UI::MainMenu::MainMenu(std::string _name) : ListPage(_name)
 {
     elementList.push_back(new Elements::MenuTransfer("Settings", UI::Page::settings));
     elementList.push_back(new Elements::MenuTransfer("Variable", UI::Page::variable));
-    elementList.push_back(new Elements::MenuTransfer("Wheel circ", UI::Page::bikeCirc));
+    elementList.push_back(new Elements::MenuTransfer("Main display", UI::Page::spdDst));
 }
 
 void UI::MainMenu::update()
@@ -85,8 +108,6 @@ void UI::MainMenu::back()
 
 //**********************************************************************
 
-
-
 void UI::Elements::MenuTransfer::action()
 {
     menuManager.prevPage = menuManager.currentPage;
@@ -100,11 +121,20 @@ UI::SettingsMenu::SettingsMenu(std::string _name) : ListPage(_name)
 {
     elementList.push_back(new Elements::MenuTransfer("main menu", Page::main));
     elementList.push_back(new Elements::MenuTransfer("Wheel circ", UI::Page::bikeCirc));
+    elementList.push_back(new Elements::MenuTransfer("Set contrast", UI::Page::setContrast));
 }
 
 void UI::ListPage::update()
 {
     MenuPage::update();
+
+   int32_t encVal = encoder.getCount();
+   uint8_t menuSize = elementList.size(); 
+
+   if(encVal < 0) encoder.reset(0);
+   else if(encVal > (menuSize - 1)) encoder.reset(menuSize - 1);
+
+   menuManager.cursor = encoder.getCount();
 
     //display.clearDisplay();
     display.setCursor(0, 0);
@@ -137,7 +167,7 @@ void UI::SettingsMenu::confirm()
 }
 
 UI::Variable::Variable(std::string _name, int16_t _min, int16_t _max, int16_t defaultVal, int16_t* _varPtr) :
-    MenuPage(_name), min(_min), max(_max), variablePtr(_varPtr) {}
+    MenuPage(_name), min(_min), max(_max), defaultValue(defaultVal), variablePtr(_varPtr) {}
 
 UI::Integer::Integer(std::string _name, int16_t _min, int16_t _max, int16_t defaultVal, int16_t* _varPtr) :
     Variable(_name, _min, _max, defaultVal, _varPtr) {}
@@ -145,6 +175,12 @@ UI::Integer::Integer(std::string _name, int16_t _min, int16_t _max, int16_t defa
 void UI::Integer::update()
 {
     MenuPage::update();
+
+    int32_t encVal = encoder.getCount();
+    if(encVal < min) encoder.reset(min);
+    else if(encVal > max) encoder.reset(max);
+
+    menuManager.cursor = encoder.getCount();
 
     value = menuManager.cursor;
 
@@ -161,13 +197,13 @@ void UI::Integer::update()
 
     if(saved)
     {
-        display.setCursor(42, 0);
+        display.setCursor(42, 10);
         display.setTextSize(1);
         display.print("SAVED");
     }
     else
     {
-        display.setCursor(42, 0);
+        display.setCursor(42, 10);
         display.setTextSize(1);
         display.print("     ");
     }
@@ -180,14 +216,19 @@ void UI::Integer::update()
 }
 
 void UI::Integer::confirm()
-{
+{ 
+    MenuPage::confirm();
+
     savedValue = value;
+    *variablePtr = value;
     //*variablePtr = value; Store on SD card
     saved = true;
 }
 
 void UI::Integer::back()
 {
+    MenuPage::back();
+
     menuManager.currentPage = menuManager.prevPage;
     menuManager.prevPage = Page::main;
 
@@ -199,6 +240,12 @@ UI::BikeCirc::BikeCirc(std::string _name) : MenuPage(_name) {}
 void UI::BikeCirc::update()
 {
     MenuPage::update();
+
+   int32_t encVal = encoder.getCount();
+   if(encVal < 0) encoder.reset(0);
+   else if(encVal > 9) encoder.reset(9);
+
+   menuManager.cursor = encoder.getCount();
 
     if(saved)
     {
@@ -433,6 +480,15 @@ void UI::BikeCirc::back()
 
 void UI::SpdDstPage::update()
 {
+    display.setTextSize(1);
+    display.setCursor(70, 0);
+    display.print("KM");
+    display.setCursor(70, 8);
+    display.print("/H");
+    display.setCursor(70, 24);
+    display.print("KM");
+    display.display();
+
     display.fillRect(0, 0, 70, 24, 0);
     display.setTextSize(3);
 
@@ -489,12 +545,16 @@ void UI::SpdDstPage::update()
 
 void UI::SpdDstPage::confirm()
 {
+    MenuPage::confirm();
+    
     menuManager.currentPage = UI::Page::main;
-    menuManager.prevPage = UI::Page::bikeCirc;
+    menuManager.prevPage = UI::Page::spdDst;
 }
 
 void UI::SpdDstPage::back()
 {
+    MenuPage::back();
+
     menuManager.currentPage = UI::Page::main;
     menuManager.prevPage = UI::Page::bikeCirc;
 }

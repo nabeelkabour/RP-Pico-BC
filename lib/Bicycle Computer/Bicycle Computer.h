@@ -22,7 +22,7 @@ struct BcData
     uint16_t tire_circ = 2110;
 };
 
-extern BcData spdDst;
+extern BcData bcData;
 
 namespace BicycleComputer
 {
